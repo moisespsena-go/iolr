@@ -1,4 +1,4 @@
-# ioutil - Sample Application
+# go-ioutil - Sample Application
 
 ## Usage
 
