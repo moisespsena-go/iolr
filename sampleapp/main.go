@@ -1,20 +1,3 @@
-# ioutil
-
-Utilites for GoLang IO.
-
-## Installation
-
-```bash
-go get -u github.com/moisespsena/go-ioutils
-```
-
-## Usage
-
-See [Sample Application](sampleapp) for more details.
-
-### Sample Code
-
-```go
 package main
 
 import (
@@ -75,5 +58,4 @@ func main() {
 	check(func() (string, error) {
 		return l.RequireF(&ioutil.FOptionsMap{Message: msgObrigatorio, Options: map[string]string{"B": "Brazil", "E": "EUA"}})
 	})
-} 
-```
+}
