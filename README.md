@@ -1,11 +1,11 @@
-# ioutil
+# go-ioutil
 
 Utilites for GoLang IO.
 
 ## Installation
 
 ```bash
-go get -u github.com/moisespsena/go-ioutils
+go get -u github.com/moisespsena/go-ioutil
 ```
 
 ## Usage
