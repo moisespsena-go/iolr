@@ -1,25 +1,29 @@
-package ioutil
+package iou
 
 import (
 	"strings"
 
 	"fmt"
-	"sort"
 
 	"github.com/go-errors/errors"
 )
 
 type Formatter interface {
 	Write(w LineWriter, require bool, requireMessage *string, defaul string) (err error)
-	DefaultValue() string
+	DefaultValue() interface{}
 	Validate(data []byte) error
+}
+
+type FormatValuer interface {
+	Formatter
+	ValueOf(data []byte) interface{}
 }
 
 type FOptions struct {
 	Message string
 	Options []string
 	Sep     string
-	Default string
+	Default interface{}
 	Wrap    [2]string
 }
 
@@ -66,28 +70,33 @@ func (f *FOptions) Validate(data []byte) error {
 	return errors.New("Invalid option.")
 }
 
-func (f *FOptions) DefaultValue() string {
+func (f *FOptions) DefaultValue() interface{} {
 	return f.Default
 }
 
-type FOptionsMap struct {
+type FOptionsPairs struct {
 	Message        string
 	Header         string
-	Options        map[string]string
-	Default        string
+	Options        StringPairs
+	Default        interface{}
 	DefaultWrap    [2]string
 	DefaultMessage string
 	Sep            string
 	CaseSensitive  bool
+	optionsMap     map[string]int
 }
 
-func (f *FOptionsMap) Write(w LineWriter, require bool, requireMessage *string, defaul string) (err error) {
-	var keys []string
-	for key := range f.Options {
-		keys = append(keys, key)
+func (f *FOptionsPairs) init() {
+	if f.optionsMap == nil {
+		f.optionsMap = map[string]int{}
+		for i, pair := range f.Options {
+			f.optionsMap[pair.K] = i
+		}
 	}
-	sort.Strings(keys)
+}
 
+func (f *FOptionsPairs) Write(w LineWriter, require bool, requireMessage *string, defaul string) (err error) {
+	f.init()
 	if f.DefaultWrap[0] == "" {
 		f.DefaultWrap[0] = "«"
 	}
@@ -117,12 +126,18 @@ func (f *FOptionsMap) Write(w LineWriter, require bool, requireMessage *string, 
 
 	var keyv string
 
-	for _, key := range keys {
-		keyv = key
-		if key == defaul {
-			keyv = "*" + key
+	for _, pair := range f.Options {
+		if pair.K == "" {
+			if _, err = w.WriteLineS(""); err != nil {
+				return err
+			}
+			continue
 		}
-		_, err = w.WriteLineS(fmt.Sprintf("  %v%v%v", keyv, f.Sep, f.Options[key]))
+		keyv = pair.K
+		if pair.K == defaul {
+			keyv = "*" + pair.K
+		}
+		_, err = w.WriteLineS(fmt.Sprintf("  %v%v%v", keyv, f.Sep, pair.V))
 		if err != nil {
 			return
 		}
@@ -141,18 +156,18 @@ func (f *FOptionsMap) Write(w LineWriter, require bool, requireMessage *string, 
 	return
 }
 
-func (f *FOptionsMap) Validate(data []byte) error {
+func (f *FOptionsPairs) Validate(data []byte) error {
+	f.init()
 	ds := string(data)
+
 	if f.CaseSensitive {
-		for k := range f.Options {
-			if k == ds {
-				return nil
-			}
+		if _, ok := f.optionsMap[ds]; ok {
+			return nil
 		}
 	} else {
 		ds = strings.ToLower(ds)
-		for k := range f.Options {
-			if strings.ToLower(k) == ds {
+		for _, pair := range f.Options {
+			if strings.ToLower(pair.K) == ds {
 				return nil
 			}
 		}
@@ -160,6 +175,14 @@ func (f *FOptionsMap) Validate(data []byte) error {
 	return errors.New("Invalid option.")
 }
 
-func (f *FOptionsMap) DefaultValue() string {
+func (f *FOptionsPairs) DefaultValue() interface{} {
 	return f.Default
+}
+
+func (f *FOptionsPairs) ValueOf(data []byte) (value interface{}) {
+	f.init()
+	if i, ok := f.optionsMap[string(data)]; ok {
+		value = f.Options[i].Ki
+	}
+	return
 }
