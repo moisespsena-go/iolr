@@ -3,6 +3,7 @@ package iou
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/moisespsena/go-error-wrap"
 )
@@ -44,7 +45,11 @@ func NewMessageLineReader(w io.Writer, r io.Reader, ew io.Writer, iw ...io.Write
 		liw = NewLineWriter(iw[0])
 	}
 	return &MessageLineReader{lw, lr, lew, liw, ": ", "* ", false, func(data []byte) []byte {
-		return append(append([]byte("« "), data...), []byte(" »")...)
+		var sufix = "\n"
+		if lr.CR() {
+			sufix = "\r\n"
+		}
+		return []byte("« " + strings.TrimSuffix(string(data), sufix) + " »\n\n")
 	}}
 }
 
