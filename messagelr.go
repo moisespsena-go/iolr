@@ -1,4 +1,4 @@
-package iou
+package iolr
 
 import (
 	"fmt"
@@ -77,7 +77,7 @@ func (r *MessageLineReader) WithPrintInput() func() {
 	}
 }
 
-func (r *MessageLineReader) ReadRaw(message []byte) (data []byte, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) ReadRaw(message []byte) (data []byte, err errwrap.ErrorWrapper) {
 	_, err2 := r.Writer.Write(message)
 	if err2 != nil {
 		return nil, errwrap.Wrap(err, "Write Message")
@@ -89,7 +89,7 @@ func (r *MessageLineReader) ReadRaw(message []byte) (data []byte, err errwrap.Er
 	return
 }
 
-func (r *MessageLineReader) read(message string, defaul ...string) (data []byte, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) read(message string, defaul ...string) (data []byte, err errwrap.ErrorWrapper) {
 	data, err = r.ReadRaw(append([]byte(message), []byte(r.Sep)...))
 	if err == nil && len(data) == 0 && (len(defaul) > 0 && defaul[0] != "") {
 		return []byte(defaul[0]), nil
@@ -97,14 +97,14 @@ func (r *MessageLineReader) read(message string, defaul ...string) (data []byte,
 	return
 }
 
-func (r *MessageLineReader) Read(message string, defaul ...string) (data []byte, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) Read(message string, defaul ...string) (data []byte, err errwrap.ErrorWrapper) {
 	if data, err = r.read(message, defaul...); err == nil && r.printInput && r.InputMessageWriter != nil {
 		r.InputMessageWriter.Write(r.InputMessage(data))
 	}
 	return
 }
 
-func (r *MessageLineReader) ReadFormatter(formatter Formatter, require bool, defaul ...interface{}) (value interface{}, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) ReadFormatter(formatter Formatter, require bool, defaul ...interface{}) (value interface{}, err errwrap.ErrorWrapper) {
 	if len(defaul) == 0 || defaul[0] == nil {
 		defaul = []interface{}{formatter.DefaultValue()}
 	}
@@ -163,25 +163,25 @@ func (r *MessageLineReader) ReadFormatter(formatter Formatter, require bool, def
 	return
 }
 
-func (r *MessageLineReader) ReadF(formatter Formatter, defaul ...interface{}) (value interface{}, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) ReadF(formatter Formatter, defaul ...interface{}) (value interface{}, err errwrap.ErrorWrapper) {
 	return r.ReadFormatter(formatter, false, defaul...)
 }
 
-func (r *MessageLineReader) Require(message string, defaul ...string) (data []byte, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) Require(message string, defaul ...string) (data []byte, err errwrap.ErrorWrapper) {
 	for len(data) == 0 && err == nil {
 		data, err = r.Read(message, defaul...)
 	}
 	return
 }
 
-func (r *MessageLineReader) RequireF(formatter Formatter, defaul ...interface{}) (value interface{}, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) RequireF(formatter Formatter, defaul ...interface{}) (value interface{}, err errwrap.ErrorWrapper) {
 	for value == nil && err == nil {
 		value, err = r.ReadFormatter(formatter, true, defaul...)
 	}
 	return
 }
 
-func (r *MessageLineReader) ReadRawS(message []byte) (data string, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) ReadRawS(message []byte) (data string, err errwrap.ErrorWrapper) {
 	var d []byte
 	d, err = r.ReadRaw(message)
 	if err == nil {
@@ -190,8 +190,8 @@ func (r *MessageLineReader) ReadRawS(message []byte) (data string, err errwrap.E
 	return
 }
 
-func (r *MessageLineReader) readS(reader func(message string, defaul ...string) (value []byte, err errwrap.ErrorWrapperInterface),
-	message string, defaul ...string) (data string, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) readS(reader func(message string, defaul ...string) (value []byte, err errwrap.ErrorWrapper),
+	message string, defaul ...string) (data string, err errwrap.ErrorWrapper) {
 	var d []byte
 	d, err = reader(message, defaul...)
 	if err == nil {
@@ -200,16 +200,16 @@ func (r *MessageLineReader) readS(reader func(message string, defaul ...string) 
 	return
 }
 
-func (r *MessageLineReader) ReadS(message string, defaul ...string) (data string, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) ReadS(message string, defaul ...string) (data string, err errwrap.ErrorWrapper) {
 	return r.readS(r.Read, message, defaul...)
 }
 
-func (r *MessageLineReader) RequireS(message string, defaul ...string) (data string, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) RequireS(message string, defaul ...string) (data string, err errwrap.ErrorWrapper) {
 	return r.readS(r.Require, message, defaul...)
 }
 
-func (r *MessageLineReader) readStringF(reader func(formatter Formatter, defaul ...interface{}) (value interface{}, err errwrap.ErrorWrapperInterface),
-	formatter Formatter, defaul ...string) (value string, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) readStringF(reader func(formatter Formatter, defaul ...interface{}) (value interface{}, err errwrap.ErrorWrapper),
+	formatter Formatter, defaul ...string) (value string, err errwrap.ErrorWrapper) {
 	var (
 		d                interface{}
 		defaultInterface = make([]interface{}, len(defaul))
@@ -220,6 +220,10 @@ func (r *MessageLineReader) readStringF(reader func(formatter Formatter, defaul 
 	}
 	d, err = reader(formatter, defaultInterface...)
 	if err == nil {
+		if d == nil {
+			value = ""
+			return
+		}
 		switch dt := d.(type) {
 		case []byte:
 			value = string(dt)
@@ -232,10 +236,14 @@ func (r *MessageLineReader) readStringF(reader func(formatter Formatter, defaul 
 	return
 }
 
-func (r *MessageLineReader) ReadFS(formatter Formatter, defaul ...string) (value string, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) ReadFS(formatter Formatter, defaul ...string) (value string, err errwrap.ErrorWrapper) {
 	return r.readStringF(r.ReadF, formatter, defaul...)
 }
 
-func (r *MessageLineReader) RequireFS(formatter Formatter, defaul ...string) (data string, err errwrap.ErrorWrapperInterface) {
+func (r *MessageLineReader) RequireFS(formatter Formatter, defaul ...string) (data string, err errwrap.ErrorWrapper) {
 	return r.readStringF(r.RequireF, formatter, defaul...)
+}
+
+func IsEmptyInput(value interface{}) bool {
+	return false
 }

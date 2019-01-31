@@ -1,4 +1,4 @@
-package iou
+package iolr
 
 import (
 	"fmt"
