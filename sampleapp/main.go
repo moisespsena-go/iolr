@@ -10,7 +10,7 @@ var i int
 
 func check(f func() (string, error)) {
 	i++
-	fmt.Println("--> EXAMPLE ", i, "<--")
+	fmt.Println("--> EXEMPLO ", i, "<--")
 	line, err := f()
 	if err != nil {
 		panic(err)
@@ -54,7 +54,7 @@ func main() {
 		return l.ReadFS(&iolr.FOptionsPairs{Message: msg, Options: iolr.MapToPairs(map[interface{}]string{"B": "Brazil", "E": "EUA"}), Default: "B"}, "c")
 	})
 
-	msgObrigatorio := "Escolha uma Opção (OBS: NÃO pode ser vazio)"
+	msgObrigatorio := "Escolha uma Opção (Obs: NÃO pode ser vazio)"
 	check(func() (string, error) {
 		return l.RequireFS(&iolr.FOptions{Message: msgObrigatorio, Options: []string{"a", "b", "c"}})
 	})

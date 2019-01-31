@@ -20,60 +20,63 @@ package main
 import (
 	"fmt"
 
-	"github.com/moisespsena/go-ioutil"
+	"github.com/moisespsena-go/iolr"
 )
 
 var i int
 
 func check(f func() (string, error)) {
 	i++
-	fmt.Println("--> EXAMPLE ", i, "<--")
+	fmt.Println("--> EXEMPLO ", i, "<--")
 	line, err := f()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Voce digitou: %q\n\n", line)
+	if iolr.IsEmptyInput(line) {
+		fmt.Printf("Voce não digitou nada.\n\n")
+	} else {
+		fmt.Printf("Voce digitou: %q\n\n", line)
+	}
 }
 
 func main() {
+	l := iolr.STDMessageLR
 	check(func() (string, error) {
 		fmt.Println("Digite alguma coisa:")
-		return ioutil.StdinLR.ReadLineS()
-	})
-	l := ioutil.STDStringMessageLR
-	check(func() (string, error) {
-		return l.Read("Digite alguma coisa 2")
+		return iolr.StdinLR.ReadLineS()
 	})
 	check(func() (string, error) {
-		return l.Read("Digite alguma coisa OU apenas dê ENTER e veja o valor padrão", "Viva o Brasil!!")
+		return l.ReadS("Digite alguma coisa 2")
 	})
-
+	check(func() (string, error) {
+		return l.ReadS("Digite alguma coisa OU apenas dê ENTER e veja o valor padrão", "Viva o Brasil!!")
+	})
 	msg := "Escolha uma Opção ou deixe vazio"
 	check(func() (string, error) {
-		return l.ReadF(&ioutil.FOptions{Message: msg, Options: []string{"a", "b", "c"}})
+		return l.ReadFS(&iolr.FOptions{Message: msg, Options: []string{"a", "b", "c"}})
 	})
 	check(func() (string, error) {
-		return l.ReadF(&ioutil.FOptions{Message: msg, Options: []string{"a", "b", "c"}, Default: "b"})
+		return l.ReadFS(&iolr.FOptions{Message: msg, Options: []string{"a", "b", "c"}, Default: "b"})
 	})
 	check(func() (string, error) {
-		return l.ReadF(&ioutil.FOptions{Message: msg, Options: []string{"a", "b", "c"}}, "c")
+		return l.ReadFS(&iolr.FOptions{Message: msg, Options: []string{"a", "b", "c"}}, "c")
 	})
 	check(func() (string, error) {
-		return l.ReadF(&ioutil.FOptionsMap{Message: msg, Options: map[string]string{"B": "Brazil", "E": "EUA"}})
+		return l.ReadFS(&iolr.FOptionsPairs{Message: msg, Options: iolr.MapToPairs(map[interface{}]string{"B": "Brazil", "E": "EUA"})})
 	})
 	check(func() (string, error) {
-		return l.ReadF(&ioutil.FOptionsMap{Message: msg, Options: map[string]string{"B": "Brazil", "E": "EUA"}, Default: "B"})
+		return l.ReadFS(&iolr.FOptionsPairs{Message: msg, Options: iolr.MapToPairs(map[interface{}]string{"B": "Brazil", "E": "EUA"}), Default: "B"})
 	})
 	check(func() (string, error) {
-		return l.ReadF(&ioutil.FOptionsMap{Message: msg, Options: map[string]string{"B": "Brazil", "E": "EUA"}, Default: "B"}, "c")
+		return l.ReadFS(&iolr.FOptionsPairs{Message: msg, Options: iolr.MapToPairs(map[interface{}]string{"B": "Brazil", "E": "EUA"}), Default: "B"}, "c")
 	})
 
-	msgObrigatorio := "Escolha uma Opção (OBS: NÃO pode ser vazio)"
+	msgObrigatorio := "Escolha uma Opção (Obs: NÃO pode ser vazio)"
 	check(func() (string, error) {
-		return l.RequireF(&ioutil.FOptions{Message: msgObrigatorio, Options: []string{"a", "b", "c"}})
+		return l.RequireFS(&iolr.FOptions{Message: msgObrigatorio, Options: []string{"a", "b", "c"}})
 	})
 	check(func() (string, error) {
-		return l.RequireF(&ioutil.FOptionsMap{Message: msgObrigatorio, Options: map[string]string{"B": "Brazil", "E": "EUA"}})
+		return l.RequireFS(&iolr.FOptionsPairs{Message: msgObrigatorio, Options: iolr.MapToPairs(map[interface{}]string{"B": "Brazil", "E": "EUA"})})
 	})
-} 
+}
 ```
