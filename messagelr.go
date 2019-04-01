@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/moisespsena/go-error-wrap"
+	"github.com/moisespsena-go/error-wrap"
 )
 
 var (
